@@ -1,0 +1,11 @@
+echo ^<!DOCTYPE html^> > index.html
+echo ^<html^> >> index.html
+echo ^<head^> >> index.html
+echo     ^<title^>My ECS App^</title^> >> index.html
+echo ^</head^> >> index.html
+echo ^<body^> >> index.html
+echo     ^<h1^>Hello from Amazon ECS!^</h1^> >> index.html
+echo     ^<p^>This application is running in a Docker container on Fargate.^</p^> >> index.html
+echo     ^<p^>Container Hostname: ^<span style="color: red;"^>HOSTNAME_PLACEHOLDER^</span^>^</p^> >> index.html
+echo ^</body^> >> index.html
+echo ^</html^> >> index.html

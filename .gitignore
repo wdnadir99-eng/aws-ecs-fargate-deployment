@@ -1,0 +1,16 @@
+# Node / Python cache
+__pycache__/
+*.pyc
+node_modules/
+
+# AWS credentials
+*.pem
+.env
+.aws/
+
+# IDE files
+.vscode/
+.idea/
+
+# Docker
+*.tar

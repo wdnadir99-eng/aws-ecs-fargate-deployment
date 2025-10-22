@@ -1,0 +1,184 @@
+#!/bin/bash
+# AWS ECS Fargate Deployment - Complete Script Collection
+# Description: All commands for deploying containerized web application on ECS Fargate
+# Author: [Your Name]
+# Date: $(date +%Y-%m-%d)
+
+###############################################################################
+# PHASE 1: Local Development Setup
+###############################################################################
+
+echo "=== PHASE 1: Local Development Setup ==="
+
+# Verify Docker installation
+docker --version
+
+# Test Docker functionality
+docker run hello-world
+
+# Create project directory
+mkdir ecs-project
+cd ecs-project
+
+# Create HTML application
+cat > index.html << EOF
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My ECS App</title>
+</head>
+<body>
+    <h1>Hello from Amazon ECS!</h1>
+    <p>This application is running in a Docker container on Fargate.</p>
+    <p>Container Hostname: <span style="color:red">HOSTNAME_PLACEHOLDER</span></p>
+</body>
+</html>
+EOF
+
+# Create Dockerfile
+cat > Dockerfile << EOF
+# Use a lightweight web server image
+FROM nginx:alpine
+
+# Copy our custom HTML file to the NGINX web root
+COPY index.html /usr/share/nginx/html/index.html
+
+# The NGINX image automatically starts the server on port 80
+# Expose port 80
+EXPOSE 80
+EOF
+
+# Build Docker image
+docker build -t online-bookstore:latest .
+
+# Test container locally
+docker run -d -p 8080:80 --name bookstore-test online-bookstore:latest
+
+# Verify container is running
+docker ps
+
+# Stop and remove test container
+docker stop bookstore-test
+docker rm bookstore-test
+
+###############################################################################
+# PHASE 3: ECR Repository & Container Image Push
+###############################################################################
+
+echo "=== PHASE 3: ECR Repository & Container Image Push ==="
+
+# Set variables (UPDATE THESE WITH YOUR VALUES)
+AWS_ACCOUNT_ID="766294587977"
+AWS_REGION="me-central-1"
+ECR_REPOSITORY="ecs-bookstore-app"
+
+# Authenticate Docker to ECR
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# Tag Docker image for ECR
+docker tag online-bookstore:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+# Push Docker image to ECR
+docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+###############################################################################
+# PHASE 6: Testing and Validation
+###############################################################################
+
+echo "=== PHASE 6: Testing and Validation ==="
+
+# Get ALB DNS name (run this after ALB is created)
+ALB_DNS=$(aws elbv2 describe-load-balancers --names ecs-alb --query 'LoadBalancers[0].DNSName' --output text --region $AWS_REGION)
+echo "Application URL: http://$ALB_DNS"
+
+# Check ECS task status
+aws ecs list-tasks --cluster bookstore-cluster --region $AWS_REGION
+
+# Describe running tasks
+aws ecs describe-tasks --cluster bookstore-cluster --tasks $(aws ecs list-tasks --cluster bookstore-cluster --region $AWS_REGION --query 'taskArns[0]' --output text) --region $AWS_REGION
+
+# Check target group health
+TG_ARN=$(aws elbv2 describe-target-groups --names ecs-tg --query 'TargetGroups[0].TargetGroupArn' --output text --region $AWS_REGION)
+aws elbv2 describe-target-health --target-group-arn $TG_ARN --region $AWS_REGION
+
+###############################################################################
+# AWS CLI Configuration Commands (One-time setup)
+###############################################################################
+
+echo "=== AWS CLI Configuration ==="
+
+# Configure AWS CLI (run once)
+# aws configure
+
+# Set default region (optional)
+# aws configure set default.region me-central-1
+
+###############################################################################
+# Cleanup Commands (Use with caution)
+###############################################################################
+
+echo "=== Cleanup Commands ==="
+
+# Stop ECS service (stops all tasks)
+# aws ecs update-service --cluster bookstore-cluster --service bookstore-service --desired-count 0 --region $AWS_REGION
+
+# Delete ECS service
+# aws ecs delete-service --cluster bookstore-cluster --service bookstore-service --region $AWS_REGION
+
+# Delete ECS cluster
+# aws ecs delete-cluster --cluster bookstore-cluster --region $AWS_REGION
+
+# Delete ECR repository (will fail if images exist)
+# aws ecr delete-repository --repository-name $ECR_REPOSITORY --force --region $AWS_REGION
+
+# Delete Docker images locally
+# docker rmi online-bookstore:latest
+# docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+echo "=== Script collection complete ==="
+echo "Don't forget to update AWS_ACCOUNT_ID with your actual AWS account ID!"
+
+
+Additional Script Files:
+1. Quick Deploy Script (deploy.sh):
+
+#!/bin/bash
+# Quick deployment script for ECS Fargate
+
+set -e  # Exit on any error
+
+echo " Starting ECS Fargate Deployment..."
+
+# Build and push image
+docker build -t online-bookstore:latest .
+aws ecr get-login-password --region me-central-1 | docker login --username AWS --password-stdin 766294587977.dkr.ecr.me-central-1.amazonaws.com
+docker tag online-bookstore:latest 766294587977.dkr.ecr.me-central-1.amazonaws.com/ecs-bookstore-app:latest
+docker push 766294587977.dkr.ecr.me-central-1.amazonaws.com/ecs-bookstore-app:latest
+
+echo "Image pushed to ECR"
+echo " Update your ECS service to use the new image revision"
+
+2. Health Check Script (health-check.sh):
+
+#!/bin/bash
+# Health check and monitoring script
+
+REGION="me-central-1"
+CLUSTER="bookstore-cluster"
+SERVICE="bookstore-service"
+
+echo " Running Health Checks..."
+
+# Check ECS service status
+echo "ECS Service Status:"
+aws ecs describe-services --cluster $CLUSTER --services $SERVICE --region $REGION --query 'services[0].[status,desiredCount,runningCount]' --output table
+
+# Check ALB health
+echo "ALB Target Health:"
+TG_ARN=$(aws elbv2 describe-target-groups --names ecs-tg --query 'TargetGroups[0].TargetGroupArn' --output text --region $REGION)
+aws elbv2 describe-target-health --target-group-arn $TG_ARN --region $REGION --query 'TargetHealthDescriptions[*].[Target.Id,TargetHealth.State]' --output table
+
+# Get application URL
+ALB_DNS=$(aws elbv2 describe-load-balancers --names ecs-alb --query 'LoadBalancers[0].DNSName' --output text --region $REGION)
+echo " Application URL: http://$ALB_DNS"
+
