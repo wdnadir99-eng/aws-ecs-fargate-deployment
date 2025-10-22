@@ -23,7 +23,7 @@ It transitions a traditional server-hosted application into a **fully managed, s
 
 ## Architecture Overview
 
-![Architecture Diagram](images/ecs-fargate-architecture.png)
+![Architecture Diagram](images/architecture.jpg)
 
 *This architecture deploys Nginx-based web applications in Docker containers on ECS Fargate. The application runs in private subnets, and traffic is routed through an Application Load Balancer. Public subnets host NAT Gateway for secure internet access, and the system is fully monitored via CloudWatch.*
 
@@ -92,6 +92,7 @@ EXPOSE 80
 ```bash
 # Build image
 docker build -t online-bookstore:latest .
+```
 
 ![Build Docker Image](images/built-docker-image.png)
 
@@ -108,7 +109,7 @@ docker ps
 ![ Verify running locally](images/test-app.png)
 
    *verify running locally.*
-
+```bash
 # Clean up test container
 docker stop bookstore-test
 docker rm bookstore-test
@@ -138,14 +139,16 @@ IPv4 CIDR: 10.0.0.0/16
 
 
 2. Create Subnets
+
+
 | Type | Name | CIDR | Purpose |
 |------|------|------|---------|
 | Public | public-subnet-1 / 2 | 10.0.1.0/24 / 10.0.2.0/24 | ALB & NAT Gateway |
 | Private | private-subnet-1 / 2 | 10.0.10.0/24 / 10.0.20.0/24 | ECS Tasks (Containers) |
 
-![Subnets](images/subnets.png)
+![Subnets](images/subnets`.png)
 
-   *Subnets.*
+   *Subnets*
 
 3. Create and Attach Internet Gateway
 
@@ -171,7 +174,7 @@ Public RT: 0.0.0.0/0 → IGW → associate with public subnets
 
 Private RT: 0.0.0.0/0 → NAT → associate with private subnets
 
-![Edit Route Table](images/edit-route-rt.png)
+![Edit Route Table](images/edit-route.png)
 
    *Edit Route Table.*
 
@@ -209,7 +212,7 @@ Create a secure container registry on AWS and push the locally built Docker imag
 - Visibility: Private  
 - Encryption: Enable using AWS managed KMS key  
 
-![Create Repository](images/create-repository.png)
+![Create Repository](images/create-a-repository.png)
 
    *Create Repository.*
 
@@ -226,7 +229,7 @@ docker tag online-bookstore:latest <AWS_ACCOUNT_ID>.dkr.ecr.<AWS-REGION>.amazona
 ```bash
 docker push <AWS_ACCOUNT_ID>.dkr.ecr.<AWS-REGION>.amazonaws.com/ecs-bookstore-app:latest
 ```
-![Push Command](images/push-command.png)
+![Push Command](images/push-commands.png)
 
    *Push Command instruction.*
 
@@ -286,7 +289,7 @@ Deploy a managed container orchestration environment with AWS ECS Fargate and de
 - Port Mappings: Container port 80 → TCP  
 - Essential: Yes  
 
-```bash
+
 # Optional command if using custom commands
 # CMD ["nginx", "-g", "daemon off;"]
 4. Click Add → Create Task Definition
@@ -328,11 +331,11 @@ Deploy the containerized application on ECS Fargate and configure high availabil
 - Target Type: IP  
 - Health Check Path: `/`  
 
-![Configure Containers](images/configure-containers.png)
+![Configure Containers](images/configure-containors.png)
 
    *Configure Containers.*
 
-![Cluster Overview](images/Cluster-overview.png)
+![Cluster Overview](images/cluster-overview.png)
 
    *Cluster Overview.*
 
@@ -361,7 +364,7 @@ Verify end-to-end functionality, load balancer routing, and high availability of
   `http://ecs-alb-xxxxxxxxx.me-central-1.elb.amazonaws.com`  
 - Expected Result: "Hello from Amazon ECS!" page is displayed  
 
-![Testing and Validation](images/testing-and-Validation.png)
+![Testing and Validation](images/Testing-and-Validation.png)
 
    *Hello from Amazon ECS!" page is displayed*
 
@@ -372,7 +375,7 @@ Verify end-to-end functionality, load balancer routing, and high availability of
 
 ![Verify Load Balancer Health](images/verify-health-check.png)
 
-   **Verify Load Balancer Health*
+   *Verify Load Balancer Health*
 
 3. **High Availability Test**
 - Monitor running tasks:  
