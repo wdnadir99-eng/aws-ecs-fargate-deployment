@@ -52,6 +52,7 @@ docker --version
 # Expected output: Docker version 24.x.x
 # Test Docker functionality
 docker run hello-world
+```
 
 2. Create Project Directory
 ```bash
@@ -76,10 +77,8 @@ echo "</body></html>" >> index.html
 ```bash
 # Use Nginx lightweight web server
 FROM nginx:alpine
-```
 # Copy custom HTML file
 COPY index.html /usr/share/nginx/html/index.html
-
 # Expose port 80
 EXPOSE 80
 ```
@@ -91,20 +90,20 @@ EXPOSE 80
 5. Build and Test Docker Image
 ```bash
 # Build image
-docker build -t online-bookstore:latest .
+docker build -t online-bookstore:latest
 ```
 
 ![Build Docker Image](images/built-docker-image.png)
 
    *Build Docker Image.*
 
-# Run container locally
+### Run container locally
 docker run -d -p 8080:80 --name bookstore-test online-bookstore:latest
 
-# Verify running
+### Verify running
 docker ps
 
-# Open browser at http://localhost:8080
+### Open browser at http://localhost:8080
 
 ![ Verify running locally](images/test-app.png)
 
@@ -184,11 +183,11 @@ Private RT: 0.0.0.0/0 → NAT → associate with private subnets
 
 6. Create Security Groups
 
-# ALB Security Group
+### ALB Security Group
 Inbound: HTTP 80 → 0.0.0.0/0
 Outbound: All
 
-# ECS Task Security Group
+#### ECS Task Security Group
 Inbound: HTTP 80 → ALB SG
 Outbound: All
 
@@ -289,9 +288,11 @@ Deploy a managed container orchestration environment with AWS ECS Fargate and de
 - Port Mappings: Container port 80 → TCP  
 - Essential: Yes  
 
-
+```bash
 # Optional command if using custom commands
 # CMD ["nginx", "-g", "daemon off;"]
+```
+
 4. Click Add → Create Task Definition
 
 Rationale
